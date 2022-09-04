@@ -45,13 +45,26 @@
 			</button>
 		</div>
 
-		<div aria-hidden="true" class="segment__meter meter">
-			<span *ngFor="let i of segment.indicators" class="meter__reading">
-				{{ i }}
-			</span>
-		</div>
+		<app-meter
+			[value]="segment.count"
+			class="segment__meter">
+		</app-meter>
+
 	</li>
 </ul>
+
+<div class="base-weight">
+	<label for="base-weight-input" class="base-weight__label">
+		Base-weight of equipment:
+	</label>
+	<input
+		id="base-weight-input"
+		type="number"
+		[(ngModel)]="form.baseWeight"
+		(input)="applyBaseWeight()"
+		class="base-weight__input"
+	/>
+</div>
 
 <button (click)="clearPlates()" class="clear">
 	Clear weight plates
