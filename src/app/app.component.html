@@ -19,6 +19,7 @@
 			<button
 				aria-describedby="add-plate-icon"
 				(click)="removePlate( segment )"
+				(dblclick)="$event.preventDefault(); removePlate( segment )"
 				class="controls__button">
 				<svg role="img" class="controls__icon">
 					<title id="add-plate-icon">
@@ -35,6 +36,7 @@
 			<button
 				aria-describedby="remove-plate-icon"
 				(click)="addPlate( segment )"
+				(dblclick)="$event.preventDefault(); removePlate( segment )"
 				class="controls__button">
 				<svg role="img" class="controls__icon">
 					<title id="remove-plate-icon">
