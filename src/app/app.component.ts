@@ -6,6 +6,7 @@ import { FormsModule } from "@angular/forms";
 
 // Import application modules.
 import { MeterComponent } from "./meter.component";
+import { UrlStateService } from "./url-state.service";
 
 // ----------------------------------------------------------------------------------- //
 // ----------------------------------------------------------------------------------- //
@@ -20,8 +21,9 @@ interface Segment {
 	standalone: true,
 	selector: "app-root",
 	// NOTE: Because I am not using a root module, there's nothing that inherently tells
-	// Angular that I expect the core directives to be available. As such, I have to
-	// include the CommonModule, which provides directives like `ngIf` and `ngForOf`.
+	// Angular that I expect the core Angular directives to be available in the templates.
+	// As such, I have to explicitly include the CommonModule, which provides directives
+	// like `ngIf` and `ngForOf`, in this component's imports.
 	imports: [
 		CommonModule,
 		FormsModule,
@@ -33,6 +35,8 @@ interface Segment {
 })
 export class AppComponent {
 
+	private urlStateService: UrlStateService;
+
 	public baseWeight: number;
 	public form: {
 		baseWeight: string;
@@ -41,7 +45,9 @@ export class AppComponent {
 	public total: number;
 
 	// I initialize the root component.
-	constructor() {
+	constructor( urlStateService: UrlStateService ) {
+
+		this.urlStateService = urlStateService;
 
 		this.baseWeight = 0;
 		this.segments = [
@@ -75,7 +81,7 @@ export class AppComponent {
 
 
 	/**
-	* I apply the given base-weight (input) value.
+	* I apply the current base-weight form value to the overall weight total.
 	*/
 	public applyBaseWeight() : void {
 
@@ -104,7 +110,7 @@ export class AppComponent {
 
 
 	/**
-	* I get called once after the inputs have been bound for the first time.
+	* I get called once after the component inputs have been bound for the first time.
 	*/
 	public ngOnInit() : void {
 
@@ -165,38 +171,21 @@ export class AppComponent {
 
 	/**
 	* I pull state from the URL (fragment, hash), and use it to update the view-model.
-	* This allows the current plate confirmation to be shareable.
+	* This allows the current weight plate confirmation to be shareable with others.
 	*/
 	private statePullFromUrl() : void {
 
-		for ( var setting of window.location.hash.slice( 1 ).split( ";" ) ) {
+		var state = this.urlStateService.get();
 
-			var parts = setting.split( ":" );
-			var name = parts[ 0 ];
-			var value = ( +parts[ 1 ] || 0 );
+		this.baseWeight = ( state[ "baseWeight" ] || 0 );
+		this.form.baseWeight = String( this.baseWeight || "" );
 
-			if ( name === "base" ) {
+		// The state is just a set of key-value pairs in which the values are numeric. As
+		// such, let's iterate over our segments to see if there is a corresponding state
+		// key for the given weight.
+		for ( var segment of this.segments ) {
 
-				this.baseWeight = value;
-				this.form.baseWeight = String( value || "" );
-				continue;
-
-			}
-
-			// Nested loops are usually meh, but in this case, I know that the array of
-			// segments is really tiny, so a nested loop should be instantaneous even if
-			// it's not the best strategy. Ideally, I'd create an "index" of the segments
-			// based on weight; but then that's just another piece of data to manage.
-			for ( var segment of this.segments ) {
-
-				if ( segment.name === name ) {
-
-					segment.count = value;
-					continue;
-
-				}
-
-			}
+			segment.count = ( state[ segment.weight ] || 0 );
 
 		}
 
@@ -211,14 +200,7 @@ export class AppComponent {
 	*/
 	private statePushToUrl() : void {
 
-		window.location.hash = this.segments.reduce(
-			( reduction, segment ) => {
-
-				return( `${ reduction };${ segment.name }:${ segment.count }` );
-
-			},
-			`base:${ this.baseWeight }`
-		);
+		this.urlStateService.set( this.baseWeight, this.segments );
 
 	}
 
